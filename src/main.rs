@@ -1,40 +1,37 @@
 use std::env;
 use std::fs;
+use std::fs::File;
+use std::io::Error;
+use std::io::Write;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     let filename = args[1].clone();
 
     let unsorted = file_format(&filename);
-    //let sorted = count_sort(unsorted);
-    println!("{:?}", unsorted);
+    let sorted = count_sort(unsorted);
+    write_file(sorted, &filename);
 
 }
 
 //32767+1
 fn count_sort(coords: Vec<Coordinate>) -> Vec<Coordinate>{
-    let temp_coord = Coordinate{
-        x: 0,
-        y: 0,
-    };
     let mut counter: Vec<i32> = vec!(0; 32768);
     let mut sorted_vec = vec!(Coordinate::empty(); coords.len());
 
-    for element in &coords{
+    for element in coords.iter(){
         counter[element.y as usize] += 1;
     };
     
-    let mut prev_val = 0;
-    for mut index in &counter{
-        index += prev_val;
-        prev_val = index;
+    for i in 1..counter.len(){
+        counter[i] += counter[i - 1];
     }
 
     for element in coords{
         let index = counter[element.y as usize];
-        sorted_vec[index as usize] =element; 
+        sorted_vec[(index - 1) as usize] = element; 
     }
-    unimplemented!()
+    sorted_vec
 }
 
 fn file_format(filename: &str) -> Vec<Coordinate>{
@@ -54,6 +51,17 @@ fn file_format(filename: &str) -> Vec<Coordinate>{
         );
     }
     res_vec
+}
+
+fn write_file(nums: Vec<Coordinate>, filename: &str) -> Result<(), Error>{
+    let path = format!("sorted_{}", filename);
+
+    let mut file = File::create(path)?;
+    for i in 0..nums.len(){
+        let line = format!("{}\t{}\n", nums[i].x, nums[i].y);
+        write!(file, "{}", line)?;
+    }
+    Ok(())
 }
 
 #[derive(Debug)]
